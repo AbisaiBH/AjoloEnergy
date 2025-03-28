@@ -24,4 +24,5 @@ urlpatterns = [
 
 urlpatterns += [
     path('articles/', views.article_list_json, name='articles_view'),
+    path('article_consume/', views.article_consume, name='article_consume' ),
 ]
