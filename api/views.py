@@ -122,7 +122,7 @@ def yearly_article_consume(request):
 
     return JsonResponse(data)
 
-def update_article_analysis(request):
+def update_article_analysis():
     def extraer_dos_elementos(texto):
         patron = r'(\[.*?\])'
         coincidencia = re.search(patron, texto, re.DOTALL)
@@ -145,7 +145,7 @@ def update_article_analysis(request):
     all_articles = Article.objects.all()
     for article in all_articles:
         article_name = article.name
-        article_consumo = article.consumo_actual
+        article_consumo = article.consumo_actual / 7 / 24
         article_info = str( [article_name, article_consumo] )
         
         response = model.generate_content(Prompts.ANALYSIS_PROMPT + "\n" + article_info)
@@ -153,6 +153,7 @@ def update_article_analysis(request):
         print( emoji, analisis )
         article.analisis_emoji = emoji
         article.analisis_text = analisis
+        
 @csrf_exempt
 def pie_article_consume(request):
     articles = list(Article.objects.all().values('name', 'consumo_actual'))
@@ -173,3 +174,5 @@ def pie_article_consume(request):
     
     # Retornar el JSON con los datos formateados
     return JsonResponse(formatted_data, safe=False)
+
+# update_article_analysis()
