@@ -6,10 +6,6 @@ from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
 from .prompts import Prompts
 
-# @csrf_exempt
-# def article_list_json(request):
-#     articles = list(Article.objects.all().values('id', 'name', 'consumo_actual', 'consumo_estimado_mensual', 'habitacion'))
-#     return JsonResponse(articles, safe=False)
 
 import google.generativeai as genai
 import os
@@ -30,7 +26,7 @@ def article_list_json(request):
     for article in articles:
         consumo_actual = Decimal(article['consumo_actual']) 
         consumo_actual_float = float(consumo_actual)
-        variacion = consumo_actual_float * random.uniform(-0.1, 0.1)
+        variacion = consumo_actual_float * random.uniform(-0.1, 0.9)
         nuevo_consumo = max(0, consumo_actual_float + variacion) 
         article['consumo_actual'] = round(nuevo_consumo, 2)  
     return JsonResponse(articles, safe=False)
@@ -106,9 +102,6 @@ def weekly_article_consume(request):
 
     return JsonResponse(data)
 
-import random
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def yearly_article_consume(request):
@@ -160,3 +153,23 @@ def update_article_analysis(request):
         print( emoji, analisis )
         article.analisis_emoji = emoji
         article.analisis_text = analisis
+@csrf_exempt
+def pie_article_consume(request):
+    articles = list(Article.objects.all().values('name', 'consumo_actual'))
+    
+    for article in articles:
+        consumo_actual = Decimal(article['consumo_actual'])
+        consumo_actual_float = float(consumo_actual)
+        
+        variacion = consumo_actual_float * random.uniform(-0.1, 0.9)
+        nuevo_consumo = max(0, consumo_actual_float + variacion)
+        
+        article['consumo_actual'] = round(nuevo_consumo, 2)
+    
+    formatted_data = [
+        {"nombre": article['name'], "consumo_actual": article['consumo_actual']}
+        for article in articles
+    ]
+    
+    # Retornar el JSON con los datos formateados
+    return JsonResponse(formatted_data, safe=False)

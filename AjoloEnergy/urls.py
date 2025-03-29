@@ -31,4 +31,5 @@ urlpatterns += [
     path('article_consume/', views.article_consume, name='article_consume'),
     path('week_article_consume/', views.weekly_article_consume, name='weekly_article_consume'),
     path('yearly_article_consume/', views.yearly_article_consume, name='yearly_article_consume'),
+    path('pie_article_consume/', views.pie_article_consume, name='pie_article_consume'),
 ]
