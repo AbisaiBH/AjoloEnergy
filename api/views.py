@@ -23,7 +23,6 @@ def article_consume(request):
     return JsonResponse(data)
 
 @csrf_exempt
-<<<<<<< HEAD
 def increase_consumption(request):
     # Obtener o crear el registro "default" con consumo inicial 0 (como Decimal)
     consumicion, created = CurrentConsumition.objects.get_or_create(
@@ -69,7 +68,6 @@ def get_consumicion(request):
     return JsonResponse({
         'current_consumption': consumicion.current_consumption
     })
-=======
 def weekly_article_consume(request):
     initial_consumption = 100
     days_of_week = ["Sábado", "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
@@ -107,4 +105,3 @@ def yearly_article_consume(request):
     }
 
     return JsonResponse(data)
->>>>>>> 37a585936c16fdbb8c668a8b440c791426100f73
