@@ -22,3 +22,34 @@ def article_consume(request):
     }
 
     return JsonResponse(data)
+
+@csrf_exempt
+def weekly_article_consume(request):
+    initial_consumption = 100
+    days_of_week = ["Sábado", "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
+    
+    weekly_data = {
+        day: max(0, initial_consumption + random.randint(-10, 10))
+        for day in days_of_week
+    }
+    
+    data = {
+        "data": weekly_data
+    }
+
+    return JsonResponse(data)
+
+@csrf_exempt
+def monthly_article_consume(request):
+    initial_consumption = 100
+    days_in_month = [f"Día {i}" for i in range(1, 31 + 1)] 
+    monthly_data = {
+        day: max(0, initial_consumption + random.randint(-10, 10))
+        for day in days_in_month
+    }
+    
+    data = {
+        "data": monthly_data
+    }
+
+    return JsonResponse(data)

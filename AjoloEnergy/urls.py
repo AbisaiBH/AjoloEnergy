@@ -24,5 +24,6 @@ urlpatterns = [
 
 urlpatterns += [
     path('articles/', views.article_list_json, name='articles_view'),
-    path('article_consume/', views.article_consume, name='article_consume' ),
+    path('article_consume/', views.article_consume, name='article_consume'),
+    path('week_article_consume/', views.weekly_article_consume, name='weekly_article_consume'),
 ]
