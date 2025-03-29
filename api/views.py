@@ -39,17 +39,25 @@ def weekly_article_consume(request):
 
     return JsonResponse(data)
 
+import random
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 @csrf_exempt
-def monthly_article_consume(request):
+def yearly_article_consume(request):
     initial_consumption = 100
-    days_in_month = [f"Día {i}" for i in range(1, 31 + 1)] 
-    monthly_data = {
-        day: max(0, initial_consumption + random.randint(-10, 10))
-        for day in days_in_month
+    months_of_year = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ]
+    
+    yearly_data = {
+        month: max(0, initial_consumption + random.randint(-10, 10))
+        for month in months_of_year
     }
     
     data = {
-        "data": monthly_data
+        "data": yearly_data
     }
 
     return JsonResponse(data)
