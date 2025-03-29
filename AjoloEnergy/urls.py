@@ -32,4 +32,6 @@ urlpatterns += [
     path('week_article_consume/', views.weekly_article_consume, name='weekly_article_consume'),
     path('yearly_article_consume/', views.yearly_article_consume, name='yearly_article_consume'),
     path('pie_article_consume/', views.pie_article_consume, name='pie_article_consume'),
+    path('turn_of_article/<int:id>', views.turn_off_article, name='turn_off_article'),
+    path('rename_article/<int:id>', views.rename_article, name='rename_article'),
 ]

@@ -1,28 +1,28 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import Article, CurrentConsumition
-import random
+from openai import OpenAI
+from dotenv import load_dotenv
 from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
 from .prompts import Prompts
-
-
+import random
+import json
 import google.generativeai as genai
 import os
 import time
-import json
 import re
+import numpy as np
+
+voltage_mean = 100
 
 
-from openai import OpenAI
-from dotenv import load_dotenv
+
 
 # Load environment variables from .env file
 load_dotenv()
 key = os.getenv('OPENAI_API_KEY')
 client = OpenAI(api_key=key)
-
-
 
 @csrf_exempt
 def article_list_json(request):
@@ -31,16 +31,18 @@ def article_list_json(request):
     for article in articles:
         consumo_actual = Decimal(article['consumo_actual']) 
         consumo_actual_float = float(consumo_actual)
-        variacion = consumo_actual_float * random.uniform(-0.1, 0.9)
+        variacion = consumo_actual_float * random.uniform(-0.1, 5.9)
         nuevo_consumo = max(0, consumo_actual_float + variacion) 
         article['consumo_actual'] = round(nuevo_consumo, 2)  
     return JsonResponse(articles, safe=False)
 
 @csrf_exempt
 def article_consume(request):
-    initial_consumption = 100
-    variation = random.randint(-10, 10)  # Variación aleatoria entre -10 y 10
-    updated_consumption = max(0, initial_consumption + variation)  # Asegura que no sea menor que 0
+    global voltage_mean
+    print(voltage_mean)
+    mu, sigma = voltage_mean, 2 # mean and standard deviation
+    s = float(np.random.normal(mu, sigma))
+    updated_consumption = round(s,1)
     data = {
         "data": [updated_consumption]
     }
@@ -48,23 +50,10 @@ def article_consume(request):
 
 @csrf_exempt
 def increase_consumption(request):
-    # Obtener o crear el registro "default" con consumo inicial 0 (como Decimal)
-    consumicion, created = CurrentConsumition.objects.get_or_create(
-        name='default',
-        defaults={'current_consumption': Decimal('0.00')}
-    )
-    # Generar un incremento aleatorio entre 0.5 y 1.2 y redondearlo a 2 decimales (como float)
-    incremento_float = round(random.uniform(0.5, 1.2), 2)
-    # Convertir el float a Decimal usando str para mantener la precisión
-    incremento = Decimal(str(incremento_float))
-    # Incrementar el consumo actual
-    consumicion.current_consumption += incremento
-    # Agregar el incremento al stack. Se guarda el valor float para que sea serializable en JSON.
-    stack = consumicion.stack_increments  
-    stack.append(incremento_float)
-    consumicion.stack_increments = stack
-    consumicion.save()
-    return JsonResponse(consumicion.current_consumption, safe=False)
+    global voltage_mean
+    if voltage_mean == 100: voltage_mean = 150
+    else: voltage_mean = 100
+    return JsonResponse({"incremento": voltage_mean}, safe=False)
 
 def decrement_last_increase(request):
     consumicion = CurrentConsumition.objects.get(name='default')
@@ -150,11 +139,9 @@ def update_article_analysis():
     all_articles = Article.objects.all()
     for article in all_articles:
         article_name = article.name
-        article_consumo = article.consumo_actual / 7 / 24
+        article_consumo = article.consumo_actual / 7 / 12
         article_info = str( [article_name, article_consumo] )
         
-        
-        # Llamada a la API de OpenAI
         completion = client.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -163,7 +150,6 @@ def update_article_analysis():
             ]
         )
         
-        # Extraemos el texto generado
         response_text = completion.choices[0].message.content
         emoji, analisis = extraer_dos_elementos(response_text) 
         print( emoji, analisis )
@@ -192,3 +178,36 @@ def pie_article_consume(request):
     return JsonResponse(formatted_data, safe=False)
     # Retornar el JSON con los datos formateados
 
+@csrf_exempt
+def turn_off_article(request, id):
+    object_article = Article.objects.get(id=id)
+    object_article.analisis_emoji = "🔴"
+    object_article.save()
+    print(object_article.analisis_emoji)
+    
+    return JsonResponse({"OK": "Artículo cambiado"})
+
+
+@csrf_exempt
+def rename_article(request, id):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    
+    object_article = Article.objects.get(id=id)
+    data = json.loads(request.body)
+    nuevo_nombre = data.get("name", "").strip()
+
+    if not nuevo_nombre:
+        return JsonResponse({"error": "El nuevo nombre no puede estar vacío"}, status=400)
+
+    object_article.name = nuevo_nombre
+    object_article.save()
+
+    return JsonResponse({"success": "Artículo renombrado", "new_name": nuevo_nombre})
+
+
+
+
+
+
+    
