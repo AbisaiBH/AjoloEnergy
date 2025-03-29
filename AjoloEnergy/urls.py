@@ -24,8 +24,14 @@ urlpatterns = [
 
 urlpatterns += [
     path('articles/', views.article_list_json, name='articles_view'),
+<<<<<<< HEAD
     path('article_consume/', views.article_consume, name='article_consume' ),
     path('increase_consumition/', views.increase_consumption),
     path('decrease_consumition/', views.decrement_last_increase),
     path('get_consumition/', views.get_consumicion),
+=======
+    path('article_consume/', views.article_consume, name='article_consume'),
+    path('week_article_consume/', views.weekly_article_consume, name='weekly_article_consume'),
+    path('yearly_article_consume/', views.yearly_article_consume, name='yearly_article_consume'),
+>>>>>>> 37a585936c16fdbb8c668a8b440c791426100f73
 ]
