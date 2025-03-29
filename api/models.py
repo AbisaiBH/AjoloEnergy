@@ -13,6 +13,7 @@ class Article(models.Model):
         decimal_places=2, 
         verbose_name="Consumo Estimado Mensual"
     )
+    habitacion = models.IntegerField()
 
     def __str__(self):
         return self.name

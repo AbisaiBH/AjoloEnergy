@@ -7,7 +7,9 @@ from decimal import Decimal
 
 @csrf_exempt
 def article_list_json(request):
-    articles = list(Article.objects.all().values('id', 'name', 'consumo_actual', 'consumo_estimado_mensual'))
+    # Obtenemos los artículos y seleccionamos los campos deseados
+    articles = list(Article.objects.all().values('id', 'name', 'consumo_actual', 'consumo_estimado_mensual', 'habitacion'))
+    # Retornamos los datos en formato JSON. 'safe=False' permite retornar una lista.
     return JsonResponse(articles, safe=False)
 
 @csrf_exempt
