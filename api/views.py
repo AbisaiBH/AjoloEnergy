@@ -14,9 +14,14 @@ import json
 import re
 
 
-GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
-genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+key = os.getenv('OPENAI_API_KEY')
+client = OpenAI(api_key=key)
+
 
 
 @csrf_exempt
@@ -148,11 +153,23 @@ def update_article_analysis():
         article_consumo = article.consumo_actual / 7 / 24
         article_info = str( [article_name, article_consumo] )
         
-        response = model.generate_content(Prompts.ANALYSIS_PROMPT + "\n" + article_info)
-        emoji, analisis = extraer_dos_elementos(response.text) 
+        
+        # Llamada a la API de OpenAI
+        completion = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "developer", "content": Prompts.ANALYSIS_PROMPT},
+                {"role": "user", "content": article_info}
+            ]
+        )
+        
+        # Extraemos el texto generado
+        response_text = completion.choices[0].message.content
+        emoji, analisis = extraer_dos_elementos(response_text) 
         print( emoji, analisis )
         article.analisis_emoji = emoji
         article.analisis_text = analisis
+        article.save()
         
 @csrf_exempt
 def pie_article_consume(request):
