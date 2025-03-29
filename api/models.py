@@ -14,6 +14,8 @@ class Article(models.Model):
         verbose_name="Consumo Estimado Mensual"
     )
     habitacion = models.IntegerField()
+    analisis_emoji = models.CharField(max_length=128)
+    analisis_text = models.TextField(max_length=1024)
 
     def __str__(self):
         return self.name

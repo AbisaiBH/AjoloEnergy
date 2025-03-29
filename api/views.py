@@ -4,11 +4,24 @@ from .models import Article, CurrentConsumition
 import random
 from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
+from .prompts import Prompts
+
+
+import google.generativeai as genai
+import os
+import time
+import json
+import re
+
+
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
+genai.configure(api_key=GOOGLE_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 
 @csrf_exempt
 def article_list_json(request):
-    articles = list(Article.objects.all().values('id', 'name', 'consumo_actual', 'consumo_estimado_mensual', 'habitacion'))
+    articles = list(Article.objects.all().values('id', 'name', 'consumo_actual', 'consumo_estimado_mensual', 'habitacion', 'analisis_emoji', 'analisis_text'))
 
     for article in articles:
         consumo_actual = Decimal(article['consumo_actual']) 
@@ -109,6 +122,38 @@ def yearly_article_consume(request):
 
     return JsonResponse(data)
 
+def update_article_analysis():
+    def extraer_dos_elementos(texto):
+        patron = r'(\[.*?\])'
+        coincidencia = re.search(patron, texto, re.DOTALL)
+        if coincidencia:
+            lista_str = coincidencia.group(1)
+            try:
+                # Convertir el fragmento encontrado a una lista usando json.loads
+                lista = json.loads(lista_str)
+            except Exception:
+                # En caso de error al convertir, retorna (None, None)
+                return None, None
+            
+            # Verifica que sea una lista y que tenga exactamente dos elementos.
+            if isinstance(lista, list) and len(lista) == 2:
+                return lista[0], lista[1]
+        
+        # Si no se encontró el fragmento o la lista no tiene 2 elementos, retorna (None, None)
+        return None, None
+
+    all_articles = Article.objects.all()
+    for article in all_articles:
+        article_name = article.name
+        article_consumo = article.consumo_actual / 7 / 24
+        article_info = str( [article_name, article_consumo] )
+        
+        response = model.generate_content(Prompts.ANALYSIS_PROMPT + "\n" + article_info)
+        emoji, analisis = extraer_dos_elementos(response.text) 
+        print( emoji, analisis )
+        article.analisis_emoji = emoji
+        article.analisis_text = analisis
+        
 @csrf_exempt
 def pie_article_consume(request):
     articles = list(Article.objects.all().values('name', 'consumo_actual'))
@@ -127,4 +172,11 @@ def pie_article_consume(request):
         for article in articles
     ]
     
+<<<<<<< HEAD
     return JsonResponse(formatted_data, safe=False)
+=======
+    # Retornar el JSON con los datos formateados
+    return JsonResponse(formatted_data, safe=False)
+
+# update_article_analysis()
+>>>>>>> e5850bac448891528fe0ba9f9cef0ee9e641bfa0
