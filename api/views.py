@@ -5,11 +5,21 @@ import random
 from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
 
+# @csrf_exempt
+# def article_list_json(request):
+#     articles = list(Article.objects.all().values('id', 'name', 'consumo_actual', 'consumo_estimado_mensual', 'habitacion'))
+#     return JsonResponse(articles, safe=False)
+
 @csrf_exempt
 def article_list_json(request):
-    # Obtenemos los artículos y seleccionamos los campos deseados
     articles = list(Article.objects.all().values('id', 'name', 'consumo_actual', 'consumo_estimado_mensual', 'habitacion'))
-    # Retornamos los datos en formato JSON. 'safe=False' permite retornar una lista.
+
+    for article in articles:
+        consumo_actual = Decimal(article['consumo_actual']) 
+        consumo_actual_float = float(consumo_actual)
+        variacion = consumo_actual_float * random.uniform(-0.1, 0.1)
+        nuevo_consumo = max(0, consumo_actual_float + variacion) 
+        article['consumo_actual'] = round(nuevo_consumo, 2)  
     return JsonResponse(articles, safe=False)
 
 @csrf_exempt
