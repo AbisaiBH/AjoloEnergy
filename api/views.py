@@ -172,7 +172,11 @@ def pie_article_consume(request):
         for article in articles
     ]
     
+<<<<<<< HEAD
+    return JsonResponse(formatted_data, safe=False)
+=======
     # Retornar el JSON con los datos formateados
     return JsonResponse(formatted_data, safe=False)
 
 # update_article_analysis()
+>>>>>>> e5850bac448891528fe0ba9f9cef0ee9e641bfa0
