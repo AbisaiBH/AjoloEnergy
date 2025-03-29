@@ -4,15 +4,28 @@ from .models import Article, CurrentConsumition
 import random
 from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
+from .prompts import Prompts
 
 # @csrf_exempt
 # def article_list_json(request):
 #     articles = list(Article.objects.all().values('id', 'name', 'consumo_actual', 'consumo_estimado_mensual', 'habitacion'))
 #     return JsonResponse(articles, safe=False)
 
+import google.generativeai as genai
+import os
+import time
+import json
+import re
+
+
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
+genai.configure(api_key=GOOGLE_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+
 @csrf_exempt
 def article_list_json(request):
-    articles = list(Article.objects.all().values('id', 'name', 'consumo_actual', 'consumo_estimado_mensual', 'habitacion'))
+    articles = list(Article.objects.all().values('id', 'name', 'consumo_actual', 'consumo_estimado_mensual', 'habitacion', 'analisis_emoji', 'analisis_text'))
 
     for article in articles:
         consumo_actual = Decimal(article['consumo_actual']) 
@@ -115,3 +128,35 @@ def yearly_article_consume(request):
     }
 
     return JsonResponse(data)
+
+def update_article_analysis(request):
+    def extraer_dos_elementos(texto):
+        patron = r'(\[.*?\])'
+        coincidencia = re.search(patron, texto, re.DOTALL)
+        if coincidencia:
+            lista_str = coincidencia.group(1)
+            try:
+                # Convertir el fragmento encontrado a una lista usando json.loads
+                lista = json.loads(lista_str)
+            except Exception:
+                # En caso de error al convertir, retorna (None, None)
+                return None, None
+            
+            # Verifica que sea una lista y que tenga exactamente dos elementos.
+            if isinstance(lista, list) and len(lista) == 2:
+                return lista[0], lista[1]
+        
+        # Si no se encontró el fragmento o la lista no tiene 2 elementos, retorna (None, None)
+        return None, None
+
+    all_articles = Article.objects.all()
+    for article in all_articles:
+        article_name = article.name
+        article_consumo = article.consumo_actual
+        article_info = str( [article_name, article_consumo] )
+        
+        response = model.generate_content(Prompts.ANALYSIS_PROMPT + "\n" + article_info)
+        emoji, analisis = extraer_dos_elementos(response.text) 
+        print( emoji, analisis )
+        article.analisis_emoji = emoji
+        article.analisis_text = analisis
